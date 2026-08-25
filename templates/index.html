@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseSF Workspace</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100' height='100' fill='%2300A745' rx='15'/%3E%3Cpath d='M 30 20 H 55 C 75 20 85 30 85 45 C 85 60 75 70 55 70 H 30 V 20 Z M 45 35 V 55 H 55 C 65 55 68 50 68 45 C 68 40 65 35 55 35 H 45 Z' fill='%23FFFFFF'/%3E%3Crect x='30' y='76' width='15' height='15' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #181A1F; --bg-panel: #21252B; --input-bg: #1E222A;
+            --border-color: #3E4451; --hover-bg: #2A2F3A; --text-muted: #ABB2BF; --text-bright: #FFFFFF;
+        }
+        .theme-ocean {
+            --bg-dark: #E4EBF5; --bg-panel: #FFFFFF; --input-bg: #F8FAFC;
+            --border-color: #D0DDF0; --hover-bg: #E2E8F0; --text-muted: #334155; --text-bright: #0F172A;
+        }
+        .theme-cyberpunk {
+            --bg-dark: #0D0221; --bg-panel: #1A0B2E; --input-bg: #0D0221;
+            --border-color: #FF00FF; --hover-bg: #4D0A66; --text-muted: #00FFFF; --text-bright: #00FF00;
+        }
+        .theme-matcha {
+            --bg-dark: #1E2923; --bg-panel: #2A3B32; --input-bg: #233129;
+            --border-color: #4A6B53; --hover-bg: #3B5244; --text-muted: #A3C2B0; --text-bright: #E8F5EE;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4A90E2; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .resizer-x { cursor: col-resize; width: 12px; display: flex; align-items: center; justify-content: center; color: var(--border-color); transition: color 0.2s; user-select: none; z-index: 10; }
+        .resizer-x:hover, .resizer-x.active { color: #4A90E2; }
+        .resizer-y { cursor: row-resize; height: 12px; display: flex; align-items: center; justify-content: center; color: var(--border-color); transition: color 0.2s; user-select: none; z-index: 10; }
+        .resizer-y:hover, .resizer-y.active { color: #4A90E2; }
+        
+        table.hide-col-health .cell-health { display: none !important; }
+        table.hide-col-meddpicc .cell-meddpicc { display: none !important; }
+        table.hide-col-owner .cell-owner { display: none !important; }
+        table.hide-col-account .cell-account { display: none !important; }
+        table.hide-col-amount .cell-amount { display: none !important; }
+        table.hide-col-stage .cell-stage { display: none !important; }
+        table.hide-col-created .cell-created { display: none !important; }
+        table.hide-col-close .cell-close { display: none !important; }
+        table.hide-col-days .cell-days { display: none !important; }
+        table.hide-col-sclast .cell-sclast { display: none !important; }
+        table.hide-col-stagnant .cell-stagnant { display: none !important; }
+        table.hide-col-oppname .cell-oppname { display: none !important; }
+        table.hide-col-type .cell-type { display: none !important; }
+        table.hide-col-motion .cell-motion { display: none !important; }
+        table.hide-col-status .cell-status { display: none !important; }
+    </style>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { bgDark: 'var(--bg-dark)', bgPanel: 'var(--bg-panel)', inputBg: 'var(--input-bg)', borderColor: 'var(--border-color)', hoverBg: 'var(--hover-bg)', textMuted: 'var(--text-muted)', textBright: 'var(--text-bright)', accentBlue: '#4A90E2'}, fontSize: { 'xxs': '0.65rem' }}} }
+        if(window.location.pathname !== '/PulseSF') window.history.replaceState({}, '', '/PulseSF');
+    </script>
+</head>
+<body class="bg-bgDark text-textMuted font-sans h-screen flex flex-col p-4 overflow-hidden relative">
+
+    <div class="flex justify-between items-center mb-3 shrink-0">
+        <div class="flex items-center space-x-3 text-sm">
+            <span class="font-bold text-textBright text-lg mr-4 flex items-center">
+                <svg viewBox="0 0 100 100" width="22" height="22" class="mr-2 rounded" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" fill="#00A745"/>
+                    <path d="M 30 20 H 55 C 75 20 85 30 85 45 C 85 60 75 70 55 70 H 30 V 20 Z M 45 35 V 55 H 55 C 65 55 68 50 68 45 C 68 40 65 35 55 35 H 45 Z" fill="#FFFFFF"/>
+                    <rect x="30" y="76" width="15" height="15" fill="#FFFFFF"/>
+                </svg>
+                PulseSF
+            </span>
+            <span class="font-bold text-textBright">Status:</span>
+            <select id="filter-status" onchange="applyFilters()" class="bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none focus:border-accentBlue"><option value="Active">Active / Non-Closed</option><option value="All">All Pipelines</option><option value="Closed">Closed Won/Lost Only</option></select>
+            <span class="font-bold text-textBright ml-2">Timeline:</span>
+            <select id="filter-timeline" onchange="applyFilters()" class="bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none focus:border-accentBlue"><option value="All Time">All Time</option><option value="Past Due">Past Due</option><option value="Closing This Month">Closing This Month</option><option value="Closing Next Month">Closing Next Month</option></select>
+            <span class="font-bold text-textBright ml-2">Stage:</span>
+            <select id="filter-stage" onchange="applyFilters()" class="bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none focus:border-accentBlue"><option value="All">All Stages</option></select>
+            <span class="font-bold text-textBright ml-2">FY:</span>
+            <select id="filter-fy" onchange="applyFilters()" class="bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none focus:border-accentBlue"><option value="All">FY: All</option></select>
+            <span class="font-bold text-textBright ml-2">Q:</span>
+            <select id="filter-q" onchange="applyFilters()" class="bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none focus:border-accentBlue"><option value="All">Q: All</option><option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option></select>
+        </div>
+
+        <div class="flex items-center space-x-2 relative">
+            <button onclick="bookmarkApp()" class="bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded hover:bg-hoverBg text-xs" title="Bookmark PulseSF">⭐</button>
+            <button onclick="forceRefresh()" class="bg-transparent border border-borderColor text-textBright px-2 py-1 rounded hover:bg-hoverBg text-xs" title="Force Refresh Schema and Data">🔄</button>
+            <button onclick="restoreChecked()" class="bg-transparent border border-borderColor text-textBright text-xs px-2 py-1 rounded hover:bg-hoverBg">⏪ Restore Checked</button>
+            <button onclick="syncChecked()" class="bg-green-600 text-black font-bold text-xs px-2 py-1 rounded hover:bg-green-500">🚀 Sync Checked</button>
+            
+            <button id="btn-settings" onclick="toggleSettings()" class="bg-transparent border border-borderColor text-textBright text-xs px-2 py-1 rounded hover:bg-hoverBg">⚙️ Settings</button>
+            <div id="settings-menu" class="hidden absolute right-10 top-8 w-56 bg-bgPanel border border-borderColor rounded shadow-xl z-50 py-2">
+                <label class="flex items-center px-4 py-2 hover:bg-hoverBg cursor-pointer text-textBright text-xs"><input type="checkbox" id="safe-mode-toggle" onchange="toggleSafeMode()" class="mr-2"> 🔒 Safe Mode (View Only)</label>
+                <div class="border-t border-borderColor my-1"></div>
+                <div class="px-4 py-1 text-xxs font-bold text-textMuted uppercase">🎨 Color Theme</div>
+                <button onclick="setTheme('dark')" class="w-full text-left px-4 py-2 hover:bg-hoverBg text-textBright text-xs">Dark Mode (Default)</button>
+                <button onclick="setTheme('ocean')" class="w-full text-left px-4 py-2 hover:bg-hoverBg text-textBright text-xs">Ocean Blue</button>
+                <button onclick="setTheme('cyberpunk')" class="w-full text-left px-4 py-2 hover:bg-hoverBg text-textBright text-xs">Cyberpunk Neon</button>
+                <button onclick="setTheme('matcha')" class="w-full text-left px-4 py-2 hover:bg-hoverBg text-textBright text-xs">Forest Matcha</button>
+            </div>
+
+            <button onclick="logOut()" class="bg-red-500/20 border border-red-500/50 text-red-400 p-1 rounded hover:bg-red-500/40 transition-colors" title="Log Out & Shutdown Server">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v9" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.2 6.8a8 8 0 1 1-8.4 0" /></svg>
+            </button>
+            <div id="toast-bookmark" class="hidden absolute top-10 right-0 bg-accentBlue text-white text-xs px-4 py-2 rounded shadow-lg transition-opacity z-50 pointer-events-none">
+                Press <b class="bg-blue-800 px-1 rounded">Cmd + D</b> (Mac) or <b class="bg-blue-800 px-1 rounded">Ctrl + D</b> (Win) to bookmark.
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center mb-2 shrink-0">
+        <span class="font-bold text-textBright text-sm mr-2">🔍 Search Account / ID:</span>
+        <input type="text" id="search-bar" onkeyup="applyFilters()" class="bg-inputBg border border-borderColor text-textBright text-sm px-3 py-1 rounded w-[400px] outline-none focus:border-accentBlue" placeholder="Enter Account Name, Opp ID, or SC Record ID...">
+        
+        <span id="lbl-row-count" class="font-bold text-green-500 ml-4 text-sm">Total Records: 0</span>
+        
+        <button id="btn-sync-filter" onclick="toggleSyncFilter()" class="ml-4 bg-bgPanel border border-borderColor text-textBright text-xs px-3 py-1 rounded hover:bg-hoverBg transition-colors" title="Click to filter pipeline to show only Opportunities where the Sales Stage and SC Stage are mismatched.">
+            <span id="count-sync-yellow" class="text-yellow-400 font-bold">0</span> Out of Sync &nbsp;|&nbsp; <span id="count-sync-red" class="text-red-400 font-bold">0</span> Action Req
+        </button>
+
+        <button onclick="openForecast()" class="ml-auto bg-purple-600/20 border border-purple-500 text-purple-400 text-xs px-4 py-1.5 rounded hover:bg-purple-600/40 font-bold transition-colors shadow-lg">
+            🔮 SC Predictive Analytics
+        </button>
+    </div>
+
+    <div id="app-container" class="flex flex-col flex-1 min-h-0">
+        <div id="top-section" class="flex flex-1 min-h-[200px] z-20">
+            <div id="left-panel" class="flex flex-col w-7/12 min-w-[300px]">
+                
+                <div class="flex justify-between items-center bg-inputBg border border-borderColor border-b-0 text-textBright text-xs p-2 rounded-t-lg shrink-0">
+                    <span class="font-bold ml-2">Pipeline Data</span>
+                    <div class="relative">
+                        <button onclick="toggleColMenu()" class="bg-transparent border border-borderColor text-textMuted px-2 py-1 rounded hover:text-accentBlue hover:bg-hoverBg transition-colors" title="Configure Columns">⚙️ Edit Columns</button>
+                        <div id="col-menu" class="hidden absolute right-0 top-8 w-56 bg-bgPanel border border-borderColor rounded shadow-2xl z-[100] py-2 text-left text-xs font-normal font-sans flex flex-col max-h-96 overflow-y-auto">
+                            <div id="col-menu-items"></div>
+                            <div class="px-2 pt-2 border-t border-borderColor mt-1">
+                                <button onclick="saveAndCloseCols()" class="w-full bg-accentBlue text-white text-xs py-1.5 rounded hover:bg-blue-600 font-bold flex justify-center items-center">
+                                    <span class="mr-1">💾</span> Save View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-bgPanel border border-borderColor rounded-b-lg overflow-auto no-scrollbar relative flex flex-col">
+                    <table class="w-full text-left border-collapse whitespace-nowrap" id="data-table">
+                        <thead class="bg-borderColor text-textBright text-xs sticky top-0 z-10" id="table-head">
+                        </thead>
+                        <tbody id="opp-list" class="text-xs text-textMuted divide-y divide-borderColor"></tbody>
+                    </table>
+                </div>
+                <div id="lbl-q-summary" class="mt-2 bg-inputBg border border-borderColor rounded-lg p-2 text-green-500 font-bold text-sm shrink-0">
+                    🏆 AMOUNT WON (CURRENT PIPELINE): $0.00
+                </div>
+            </div>
+
+            <div id="resizer-x" class="resizer-x">⋮</div>
+
+            <div id="right-panel" class="flex flex-col flex-1 min-w-[300px] bg-bgPanel border border-borderColor rounded-lg p-4 shrink-0">
+                <h2 id="lbl-selected-account" class="text-textBright font-bold text-sm mb-3">Select an account row to edit metrics</h2>
+                <label class="text-textBright font-bold text-xs mb-1">🟢 Main Opportunity Notes:</label>
+                <textarea id="txt-sc-notes" onkeyup="updateCharCount()" class="flex-1 bg-inputBg border border-borderColor text-textBright text-sm p-3 rounded outline-none focus:border-accentBlue font-mono resize-none mb-1 disabled:opacity-50 hover:border-accentBlue transition-colors"></textarea>
+                <div id="count-sc" class="text-right text-xxs text-textMuted mb-2">0 / 4000</div>
+                <label class="text-textBright font-bold text-xs mb-1">🔵 SC Opportunity Notes:</label>
+                <textarea id="txt-poc-notes" onkeyup="updateCharCount()" class="flex-1 bg-inputBg border border-borderColor text-textBright text-sm p-3 rounded outline-none focus:border-accentBlue font-mono resize-none mb-1 disabled:opacity-50 hover:border-accentBlue transition-colors"></textarea>
+                <div id="count-poc" class="text-right text-xxs text-textMuted mb-4">0 / 4000</div>
+                <div class="flex justify-between items-center shrink-0">
+                    <button onclick="loadLocalDraft()" class="bg-transparent border border-borderColor text-textBright text-xs px-3 py-2 rounded hover:bg-hoverBg disabled:opacity-50">⏪ Manual Draft Load</button>
+                    <div class="flex space-x-2">
+                        <button onclick="saveNotes()" id="btn-save-notes" class="bg-accentBlue text-textBright font-bold text-xs px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50">💾 Save Current Notes</button>
+                        <button onclick="copyToScNotes()" id="btn-copy-notes" class="bg-blue-600 text-textBright font-bold text-xs px-4 py-2 rounded hover:bg-blue-500 disabled:opacity-50">📋 Copy to SC Notes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resizer-y" class="resizer-y">⋯</div>
+
+        <div id="bottom-section" class="flex flex-col h-[320px] min-h-[150px] shrink-0">
+            <div class="flex gap-4 flex-1 overflow-hidden" id="matrix-container">
+                <div class="w-1/2 bg-bgPanel border border-borderColor rounded-lg p-4 flex flex-col overflow-y-auto no-scrollbar">
+                    <div class="flex justify-between items-center mb-4 shrink-0">
+                        <h2 class="text-textBright font-bold text-sm">💼 Main Opportunity Properties</h2>
+                        <div class="flex items-center">
+                            <button onclick="openMeddpicc()" id="btn-meddpicc" class="bg-accentBlue text-textBright text-xs px-3 py-1 rounded hover:bg-blue-600 font-bold disabled:opacity-50">📊 View MEDDPICC Details</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-[max-content_1fr_max-content_1fr] gap-x-4 gap-y-2 items-center text-xs shrink-0 mb-4">
+                        <span class="font-bold text-textBright text-right">Opportunity Owner:</span>
+                        <input id="prop-owner" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+                        <span class="font-bold text-textBright text-right">Owner ID:</span>
+                        <input id="prop-owner-id" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+                        
+                        <span class="font-bold text-textBright text-right">Opportunity ID:</span>
+                        <input id="prop-opp-id" type="text" readonly class="bg-transparent text-accentBlue underline cursor-pointer px-2 py-1 outline-none w-full border border-transparent col-span-3" onclick="openLink(this.id)" title="Click to open Opportunity in Salesforce">
+                        
+                        <span class="font-bold text-textBright text-right">Opportunity Type:</span>
+                        <input id="prop-type" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+                        <span class="font-bold text-textBright text-right">Stage:</span>
+                        <input id="prop-stage" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+                        <span class="font-bold text-textBright text-right">Sales Motion:</span>
+                        <input id="prop-motion" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+                        <span class="font-bold text-textBright text-right">Opportunity Team:</span>
+                        <input id="prop-team" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full col-span-3 border border-transparent">
+                    </div>
+
+                    <div class="flex flex-col gap-2 shrink-0 pb-2">
+                        <label class="font-bold text-textBright text-xs">Current Status:</label>
+                        <textarea id="prop-current-status" class="w-full bg-inputBg border border-accentBlue text-textBright text-xs p-2 rounded resize-none h-12 outline-none disabled:opacity-50 hover:border-accentBlue transition-colors"></textarea>
+                        <label class="font-bold text-textBright text-xs mt-2">Next Steps:</label>
+                        <textarea id="prop-next-steps" class="w-full bg-inputBg border border-borderColor text-textBright text-xs p-2 rounded resize-none h-10 outline-none focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors"></textarea>
+                        <div class="flex items-center mt-2">
+                            <label class="font-bold text-textBright text-xs mr-2">SC Last Modified:</label>
+                            <input id="prop-sc-last-mod" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-48 text-xs border border-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-1/2 bg-bgPanel border border-borderColor rounded-lg p-4 flex flex-col overflow-y-auto no-scrollbar relative">
+                    <h2 class="text-textBright font-bold text-sm text-center mb-4 shrink-0">🛠️ SC Opportunity Properties</h2>
+                    
+                    <div class="grid grid-cols-[max-content_1fr_max-content_1fr] gap-x-4 gap-y-2 items-center text-xs shrink-0 pb-2">
+                        
+                        <span class="font-bold text-textBright text-right">SC Record ID:</span>
+                        <input id="prop-poc-id" type="text" readonly class="bg-transparent text-accentBlue underline cursor-pointer px-2 py-1 outline-none w-full border border-transparent flex-1" onclick="openLink(this.id)" title="Click to open SC Record in Salesforce">
+                        
+                        <span class="font-bold text-textBright text-right">SC Stage:</span>
+                        <select id="ui-sc-stage" onchange="evaluateFitReason()" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="poc_stage,sc_stage,stage"></select>
+
+                        <span class="font-bold text-textBright text-right">Solution Consultant:</span>
+                        <input id="prop-sc-name" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+                        <span class="font-bold text-textBright text-right">Sales Lead:</span>
+                        <input id="prop-sales-lead" type="text" readonly class="bg-transparent text-textMuted px-2 py-1 outline-none w-full border border-transparent">
+
+                        <span class="font-bold text-textBright text-right">Start Date:</span>
+                        <input id="ui-start-date" type="date" class="dynamic-poc-field bg-inputBg border border-borderColor text-textMuted px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="start_date">
+                        <span class="font-bold text-textBright text-right">End Date:</span>
+                        <input id="ui-end-date" type="date" class="dynamic-poc-field bg-inputBg border border-borderColor text-textMuted px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="end_date">
+
+                        <span class="font-bold text-textBright text-right">Opportunity Risk:</span>
+                        <select id="ui-risk" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="opportunity_risk,risk__c,risk"></select>
+                        <span class="font-bold text-textBright text-right">Closed Reason:</span>
+                        <select id="ui-closed-reason" onchange="evaluateFitReason()" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="closed_reason,close_reason,lost_reason"></select>
+
+                        <span class="font-bold text-textBright text-right">POV Status:</span>
+                        <select id="ui-pov-status" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="proof_of_value_status,pov_status,proof_of_value,pov_state,value_status,pov"></select>
+                        <span class="font-bold text-textBright text-right">Op Res 360 Status:</span>
+                        <select id="ui-op-res" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="operational_resiliency_360_status__c,operational_resiliency,op_res,resiliency"></select>
+
+                        <span class="font-bold text-textBright text-right">Blocker Category:</span>
+                        <select id="ui-blocker-cat" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="blocker_category,blocker"></select>
+                        <span class="font-bold text-textBright text-right">Manager Review:</span>
+                        <input id="ui-mgr-rev" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="manager_review,proof_of_value_manager">
+
+                        <span class="font-bold text-textBright text-right">Use Case 1:</span>
+                        <input id="ui-uc1" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="use_case_1">
+                        <span class="font-bold text-textBright text-right">POV Start Date:</span>
+                        <input id="ui-pov-start" type="date" class="dynamic-poc-field bg-inputBg border border-borderColor text-textMuted px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="pov_start">
+
+                        <span class="font-bold text-textBright text-right">Use Case 2:</span>
+                        <input id="ui-uc2" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="use_case_2">
+                        <span class="font-bold text-textBright text-right">POV End Date:</span>
+                        <input id="ui-pov-end" type="date" class="dynamic-poc-field bg-inputBg border border-borderColor text-textMuted px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="pov_end">
+
+                        <span class="font-bold text-textBright text-right">Use Case 3:</span>
+                        <input id="ui-uc3" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="use_case_3">
+                        <span class="font-bold text-textBright text-right">Reviewed Date:</span>
+                        <input id="ui-rev-date" type="date" class="dynamic-poc-field bg-inputBg border border-borderColor text-textMuted px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="reviewed_date">
+
+                        <span class="font-bold text-textBright text-right">Product:</span>
+                        <input id="ui-product" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="product__c,product">
+                        <span class="font-bold text-textBright text-right">Acct Slack Channel:</span>
+                        <input id="ui-slack" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="slack">
+
+                        <span class="font-bold text-textBright text-right">UserVoice Record:</span>
+                        <input id="ui-uservoice" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="uservoice">
+                        <span class="font-bold text-textBright text-right">Additional Details:</span>
+                        <input id="ui-add-details" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="additional_details">
+
+                        <span class="font-bold text-textBright text-right">Partial/No Fit Reason:</span>
+                        <select id="ui-partial-fit" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs px-2 py-1 rounded outline-none w-full focus:border-accentBlue col-span-3 disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="partial,fit_reason,canceled_reason,fit"></select>
+
+                        <span class="font-bold text-textBright text-right">Validation Plan:</span>
+                        <input id="ui-val-plan" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-accentBlue underline px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors col-span-3 cursor-pointer" data-keywords="validation_plan" onclick="openLink(this.id)" title="Click to open this link">
+
+                        <span class="font-bold text-textBright text-right">Link To Lucid Chart:</span>
+                        <input id="ui-lucid" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-accentBlue underline px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors col-span-3 cursor-pointer" data-keywords="lucid" onclick="openLink(this.id)" title="Click to open this link">
+                        
+                        <span class="font-bold text-textBright text-right">Link to Discovery Notes:</span>
+                        <input id="ui-gdrive" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-accentBlue underline px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors col-span-3 cursor-pointer" data-keywords="discovery_notes,gdrive" onclick="openLink(this.id)" title="Click to open this link">
+                        
+                        <span class="font-bold text-textBright text-right">Link to Op Res Folder:</span>
+                        <input id="ui-op-folder" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-accentBlue underline px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors col-span-3 cursor-pointer" data-keywords="operational_resiliency_folder,op_res_folder" onclick="openLink(this.id)" title="Click to open this link">
+
+                        <span class="font-bold text-textBright text-right">Link PagerDuty POV:</span>
+                        <input id="ui-pd-pov" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-accentBlue underline px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors col-span-3 cursor-pointer" data-keywords="pagerduty_pov" onclick="openLink(this.id)" title="Click to open this link">
+                        
+                        <span class="font-bold text-textBright text-right">Link Rundeck POV:</span>
+                        <input id="ui-rd-pov" type="text" class="dynamic-poc-field bg-inputBg border border-borderColor text-accentBlue underline px-2 py-1 rounded outline-none w-full focus:border-accentBlue disabled:opacity-50 hover:border-accentBlue transition-colors col-span-3 cursor-pointer" data-keywords="rundeck_pov" onclick="openLink(this.id)" title="Click to open this link">
+
+                        <div class="col-span-4 flex flex-col gap-1 mt-2">
+                            <label class="font-bold text-textBright text-xs">Opportunity Risk Details:</label>
+                            <textarea id="ui-risk-details" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs p-2 rounded resize-y min-h-[3rem] outline-none focus:border-accentBlue w-full disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="risk_details"></textarea>
+                        </div>
+
+                        <div class="col-span-4 flex flex-col gap-1 mt-1">
+                            <label class="font-bold text-textBright text-xs">Blocker Details:</label>
+                            <textarea id="ui-blocker-det" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs p-2 rounded resize-y min-h-[3rem] outline-none focus:border-accentBlue w-full disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="blocker_details,blockers"></textarea>
+                        </div>
+
+                        <div class="col-span-4 flex flex-col gap-1 mt-1">
+                            <label class="font-bold text-textBright text-xs">Minimum Technical Requirements:</label>
+                            <textarea id="ui-min-tech" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs p-2 rounded resize-y min-h-[3rem] outline-none focus:border-accentBlue w-full disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="minimum_technical,tech_req"></textarea>
+                        </div>
+
+                        <div class="col-span-4 flex flex-col gap-1 mt-1">
+                            <label class="font-bold text-textBright text-xs">SC Manager Notes:</label>
+                            <textarea id="ui-sc-mgr-notes" class="dynamic-poc-field bg-inputBg border border-borderColor text-textBright text-xs p-2 rounded resize-y min-h-[3rem] outline-none focus:border-accentBlue w-full disabled:opacity-50 hover:border-accentBlue transition-colors" data-keywords="manager_notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3 flex justify-center shrink-0">
+                <button onclick="saveMatrix()" id="btn-save-matrix" class="bg-accentBlue text-white font-bold text-sm px-16 py-2 rounded-lg hover:bg-blue-600 shadow-xl border border-borderColor disabled:opacity-50">
+                    💾 Save Property Matrix Updates
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="enterprise-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[300] flex justify-center items-center">
+        <div class="bg-bgPanel border border-borderColor rounded-lg w-1/3 min-w-[400px] flex flex-col shadow-2xl overflow-hidden">
+            <div id="modal-header" class="bg-red-500/20 border-b border-red-500/50 p-4 flex justify-between items-center">
+                <h3 id="modal-title" class="text-red-400 font-bold text-lg flex items-center">
+                    <span id="modal-icon" class="mr-2">⚠️</span> <span id="modal-title-text">System Error</span>
+                </h3>
+                <button onclick="closeModal()" class="text-textMuted hover:text-white font-bold">✕</button>
+            </div>
+            <div class="p-6 flex-1">
+                <div class="bg-inputBg border border-borderColor p-3 rounded font-mono text-xs text-textBright max-h-48 overflow-y-auto break-all select-all mb-4" id="modal-msg"></div>
+                <div class="flex justify-between items-center">
+                    <a href="/api/logs/latest" target="_blank" class="text-accentBlue hover:underline text-xs flex items-center" id="modal-log-link">📄 View Server Logs</a>
+                    <div class="flex space-x-2">
+                        <button onclick="copyModalText()" class="bg-inputBg border border-borderColor text-textBright px-3 py-1.5 rounded hover:bg-hoverBg text-xs transition-colors">📋 Copy Details</button>
+                        <button onclick="closeModal()" class="bg-accentBlue text-white px-4 py-1.5 rounded hover:bg-blue-500 text-xs font-bold transition-colors">Acknowledge</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="forecast-dashboard" class="hidden fixed inset-0 bg-bgDark z-[200] flex flex-col p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6 shrink-0 border-b border-borderColor pb-4">
+            <h1 class="text-textBright text-2xl font-bold flex items-center">
+                <span class="text-3xl mr-3">🔮</span> SC Predictive Pipeline Analytics
+            </h1>
+            <button onclick="closeForecast()" class="bg-inputBg border border-borderColor text-textBright px-4 py-2 rounded hover:bg-hoverBg font-bold transition-colors shadow">
+                ✕ Close Dashboard
+            </button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-4 mb-6 shrink-0">
+            <div class="bg-bgPanel border border-borderColor rounded-lg p-4 shadow-lg flex flex-col justify-between">
+                <div class="text-textMuted text-xs font-bold uppercase mb-1">Active SC Pipeline</div>
+                <div id="fc-active-amt" class="text-textBright text-2xl font-bold">--</div>
+                <div class="text-textMuted text-xxs mt-1">Total open dollars with SC attached.</div>
+            </div>
+            <div class="bg-bgPanel border border-borderColor rounded-lg p-4 shadow-lg border-t-4 border-t-purple-500 flex flex-col justify-between">
+                <div class="text-textMuted text-xs font-bold uppercase mb-1">Avg Deal Completion</div>
+                <div id="fc-avg-comp" class="text-purple-400 text-2xl font-bold">--</div>
+                <div class="text-textMuted text-xxs mt-1">Blend of SC Stage + MEDDPICC %</div>
+            </div>
+            <div class="bg-bgPanel border border-borderColor rounded-lg p-4 shadow-lg border-t-4 border-t-yellow-500 flex flex-col justify-between">
+                <div class="text-textMuted text-xs font-bold uppercase mb-1">Critical Stagnancy</div>
+                <div id="fc-critical" class="text-yellow-500 text-2xl font-bold">--</div>
+                <div class="text-textMuted text-xxs mt-1">Deals untouched for > 30 Days</div>
+            </div>
+            <div class="bg-bgPanel border border-borderColor rounded-lg p-4 shadow-lg border-t-4 border-t-green-500 flex flex-col justify-between">
+                <div class="text-textMuted text-xs font-bold uppercase mb-1">Historical Win Benchmark</div>
+                <div id="fc-bench" class="text-green-500 text-2xl font-bold">--</div>
+                <div class="text-textMuted text-xxs mt-1">Avg MEDDPICC score on past Won deals</div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mb-6 shrink-0 h-80">
+            <div class="w-2/3 bg-bgPanel border border-borderColor rounded-lg p-4 shadow-lg flex flex-col">
+                <h3 class="text-textBright text-sm font-bold mb-2">The Risk Quadrant (Momentum vs Completion)</h3>
+                <div class="flex-1 relative w-full h-full"><canvas id="scatterChart"></canvas></div>
+            </div>
+            <div class="w-1/3 bg-bgPanel border border-borderColor rounded-lg p-4 shadow-lg flex flex-col">
+                <h3 class="text-textBright text-sm font-bold mb-2">Pipeline by SC Stage & Stagnancy</h3>
+                <div class="flex-1 relative w-full h-full"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="flex-1 bg-bgPanel border border-borderColor rounded-lg overflow-auto no-scrollbar shadow-lg">
+            <table class="w-full text-left border-collapse whitespace-nowrap">
+                <thead class="bg-inputBg text-textBright text-xs sticky top-0 z-10 shadow">
+                    <tr>
+                        <th class="p-3 font-bold border-b border-borderColor">Account</th>
+                        <th class="p-3 font-bold border-b border-borderColor">SC Stage</th>
+                        <th class="p-3 font-bold text-center border-b border-borderColor">MEDDPICC</th>
+                        <th class="p-3 font-bold text-center text-purple-400 border-b border-borderColor">Completion %</th>
+                        <th class="p-3 font-bold text-center border-b border-borderColor">Stagnant Days</th>
+                        <th class="p-3 font-bold text-center text-red-400 border-b border-borderColor">Staleness Risk %</th>
+                        <th class="p-3 font-bold text-right border-b border-borderColor">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="forecast-list" class="text-xs text-textMuted divide-y divide-borderColor"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="meddpicc-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
+        <div class="bg-bgPanel border border-borderColor rounded-lg w-1/2 min-w-[500px] h-2/3 flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center p-4 border-b border-borderColor">
+                <h3 class="text-textBright font-bold text-lg flex items-center" id="meddpicc-title">
+                    <svg viewBox="0 0 100 100" width="20" height="20" class="mr-2 rounded">
+                        <rect width="100" height="100" fill="#00A745"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M 30 20 H 55 C 75 20 85 30 85 45 C 85 60 75 70 55 70 H 30 V 20 Z M 45 35 V 55 H 55 C 65 55 68 50 68 45 C 68 40 65 35 55 35 H 45 Z" fill="#FFFFFF"/>
+                        <rect x="30" y="76" width="15" height="15" fill="#FFFFFF"/>
+                    </svg>
+                    MEDDPICC Profile Details
+                </h3>
+                <button onclick="closeMeddpicc()" class="text-textMuted hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div id="meddpicc-content" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL FIELD RESOLVER
+        let resolvedFields = {};
+        
+        // TOGGLE STATES
+        let filterSyncIssuesOnly = false;
+
+        // --- DYNAMIC COLUMNS ENGINE ---
+        let columns = [
+            { id: 'health', label: 'Health', prop: 'Health', visible: true, width: 'w-16' },
+            { id: 'meddpicc', label: 'MEDDPICC', prop: 'Meddpicc', visible: true, width: 'w-24' },
+            { id: 'owner', label: 'Opp Owner', prop: 'Owner', visible: true, width: 'w-32' },
+            { id: 'account', label: 'Account Name', prop: 'Account', visible: true, width: 'w-48' },
+            { id: 'amount', label: 'Amount', prop: 'Amount', visible: true, width: 'w-24' },
+            { id: 'stage', label: 'Stage', prop: 'StageName', visible: true, width: 'w-32' },
+            { id: 'type', label: 'Opp Type', prop: 'Type', visible: false, width: 'w-24' },
+            { id: 'motion', label: 'Motion', prop: 'Motion', visible: false, width: 'w-24' },
+            { id: 'created', label: 'Created', prop: 'CreatedDate', visible: true, width: 'w-24' },
+            { id: 'close', label: 'Close Date', prop: 'CloseDate', visible: true, width: 'w-24' },
+            { id: 'days', label: 'Days Open', prop: 'DaysOpen', visible: true, width: 'w-20' },
+            { id: 'sclast', label: 'SC Last Mod', prop: 'SCLastMod', visible: true, width: 'w-24' },
+            { id: 'stagnant', label: 'Stagnant', prop: 'Stagnant', visible: true, width: 'w-20' },
+            { id: 'oppname', label: 'Opp Name', prop: 'OppName', visible: true, width: 'w-48' },
+            { id: 'status', label: 'Status', prop: 'Status', visible: false, width: 'w-48' }
+        ];
+
+        let rawRecords = []; let filteredRecords = []; let dynamicSchema = {};
+        let isSafeMode = false; let selectedRecordId = null; let selectedPocId = null;
+        let sortCol = null; let sortAsc = true; let pollInterval;
+        let scatterChartInstance = null; let barChartInstance = null;
+
+        window.addEventListener('beforeunload', function (e) { e.preventDefault(); e.returnValue = ''; });
+        window.addEventListener('unload', function () { navigator.sendBeacon('/api/shutdown'); });
+
+        // --- UI LOGIC & EVENTS ---
+        
+        // XSS ESCAPE FUNCTION - Secures all dynamic text fields from code injection vulnerabilities
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        function evaluateFitReason() {
+            const stageEl = document.getElementById('ui-sc-stage');
+            const reasonEl = document.getElementById('ui-closed-reason');
+            const fitEl = document.getElementById('ui-partial-fit');
+
+            if (!stageEl || !reasonEl || !fitEl) return;
+
+            const stageVal = (stageEl.value || '').toLowerCase();
+            const reasonVal = (reasonEl.value || '').trim();
+
+            if (stageVal.includes('closed') && reasonVal !== '' && reasonVal !== '--None--') {
+                fitEl.disabled = isSafeMode ? true : false;
+                fitEl.classList.remove('opacity-50', 'bg-gray-800');
+            } else {
+                fitEl.disabled = true;
+                fitEl.classList.add('opacity-50', 'bg-gray-800');
+                if(!isSafeMode && selectedPocId) fitEl.value = '';
+            }
+        }
+        
+        function toggleSyncFilter() {
+            filterSyncIssuesOnly = !filterSyncIssuesOnly;
+            const btn = document.getElementById('btn-sync-filter');
+            if(filterSyncIssuesOnly) {
+                btn.classList.add('bg-blue-900', 'border-blue-500');
+            } else {
+                btn.classList.remove('bg-blue-900', 'border-blue-500');
+            }
+            applyFilters();
+        }
+
+        function showModal(title, msg, type = 'error') {
+            const titleEl = document.getElementById('modal-title');
+            const iconEl = document.getElementById('modal-icon');
+            const headerEl = document.getElementById('modal-header');
+
+            if (type === 'error') {
+                titleEl.className = "text-red-400 font-bold text-lg flex items-center";
+                headerEl.className = "bg-red-500/20 border-b border-red-500/50 p-4 flex justify-between items-center";
+                iconEl.innerText = "⚠️";
+            } else {
+                titleEl.className = "text-accentBlue font-bold text-lg flex items-center";
+                headerEl.className = "bg-blue-500/20 border-b border-blue-500/50 p-4 flex justify-between items-center";
+                iconEl.innerText = "ℹ️";
+            }
+
+            document.getElementById('modal-title-text').innerText = title;
+            document.getElementById('modal-msg').innerText = msg;
+            
+            document.getElementById('modal-log-link').style.display = type === 'error' ? 'flex' : 'none';
+            document.getElementById('enterprise-modal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('enterprise-modal').classList.add('hidden'); }
+
+        function copyModalText() {
+            const text = document.getElementById('modal-msg').innerText;
+            navigator.clipboard.writeText(text);
+            const btn = event.target; const orig = btn.innerText;
+            btn.innerText = "✅ Copied!";
+            setTimeout(() => btn.innerText = orig, 2000);
+        }
+
+        function bookmarkApp() {
+            const toast = document.getElementById('toast-bookmark');
+            toast.classList.remove('hidden'); setTimeout(() => { toast.classList.add('hidden'); }, 4000);
+        }
+        
+        function openLink(id) {
+            const el = document.getElementById(id);
+            if(el && el.value && el.value.length > 5) {
+                let url = el.value.trim();
+                if(id === 'prop-opp-id') {
+                    url = `https://pagerduty.lightning.force.com/lightning/r/Opportunity/${url}/view`;
+                } else if(id === 'prop-poc-id') {
+                    url = `https://pagerduty.lightning.force.com/lightning/r/POC__c/${url}/view`;
+                } else if (!url.startsWith('http')) {
+                    url = 'https://' + url;
+                }
+                window.open(url, '_blank');
+            }
+        }
+        
+        function stripHtml(htmlStr) {
+            if (!htmlStr) return "";
+            const doc = new DOMParser().parseFromString(htmlStr, 'text/html'); return doc.body.textContent || "";
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initResizers(); restoreLayout(); restoreCols(); clearEditor(); fetchSchema();
+            
+            document.getElementById('right-panel').addEventListener('input', () => { if(selectedRecordId && !isSafeMode) cacheLocalDraft(selectedRecordId); });
+            document.getElementById('matrix-container').addEventListener('input', () => { if(selectedRecordId && !isSafeMode) cacheLocalDraft(selectedRecordId); });
+            
+            document.addEventListener('click', (e) => {
+                const sMenu = document.getElementById('settings-menu'); const sBtn = document.getElementById('btn-settings');
+                if (sMenu && !sMenu.classList.contains('hidden') && !sMenu.contains(e.target) && !sBtn.contains(e.target)) sMenu.classList.add('hidden');
+                const cMenu = document.getElementById('col-menu');
+                if (cMenu && !cMenu.classList.contains('hidden') && !cMenu.contains(e.target) && !e.target.closest('button[title="Configure Columns"]')) cMenu.classList.add('hidden');
+            });
+        });
+
+        // --- PREDICTIVE FORECAST ENGINE ---
+        function openForecast() {
+            document.getElementById('forecast-dashboard').classList.remove('hidden');
+            const list = document.getElementById('forecast-list');
+            list.innerHTML = '';
+
+            const mpTotal = dynamicSchema.meddpicc ? dynamicSchema.meddpicc.length : 27;
+            const stageWeights = { 'plan': 10, 'tech discovery': 30, 'demo': 60, 'validate': 100, 'partner': 80 };
+
+            let wonMpSum = 0; let wonCount = 0;
+            rawRecords.forEach(opp => {
+                if(opp.StageName?.toLowerCase().includes('won')) {
+                    wonCount++;
+                    if(dynamicSchema.meddpicc) wonMpSum += dynamicSchema.meddpicc.filter(f => opp[f.name]).length;
+                }
+            });
+            const avgWonMp = wonCount > 0 ? (wonMpSum / wonCount) : 0;
+            document.getElementById('fc-bench').innerText = wonCount > 0 ? `${avgWonMp.toFixed(1)} / ${mpTotal}` : 'No Data';
+
+            let boundPocStageApi = '';
+            document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                if (el.getAttribute('data-keywords').includes('poc_stage')) boundPocStageApi = el.getAttribute('data-api-name');
+            });
+
+            const scOpps = rawRecords.filter(o => {
+                const oStage = o.StageName?.toLowerCase() || '';
+                const poc = o.POCs__r && o.POCs__r.records ? o.POCs__r.records[0] : null;
+                const pStage = poc ? (poc[boundPocStageApi]?.toLowerCase() || '') : '';
+                return !oStage.includes('won') && !oStage.includes('lost') && poc && !pStage.includes('closed');
+            });
+
+            let tAmt = 0; let tComp = 0; let critCount = 0;
+            
+            const scatterData = []; 
+            const barData = { healthy: [0,0,0,0,0], warning: [0,0,0,0,0], critical: [0,0,0,0,0], labels: ['Plan', 'Tech Discovery', 'Demo', 'Validate', 'Partner'] };
+
+            scOpps.forEach(opp => {
+                const poc = opp.POCs__r.records[0];
+                const amt = parseFloat(opp.Amount || 0);
+                tAmt += amt;
+
+                const lnD = parseLatestDate(opp.SC_Notes__c, poc.Notes__c);
+                const today = new Date();
+                let dStag = 0;
+                if (lnD) dStag = Math.floor((today - lnD) / (1000 * 60 * 60 * 24));
+                else if (poc.LastModifiedDate || opp.LastModifiedDate) {
+                    const scL = (poc.LastModifiedDate || opp.LastModifiedDate).split('T')[0];
+                    dStag = Math.floor((today - new Date(scL)) / (1000 * 60 * 60 * 24));
+                }
+                if(dStag > 30) critCount++;
+
+                let riskPct = Math.min((dStag / 30) * 100, 100);
+                let boundRiskApi = '';
+                document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                    if (el.getAttribute('data-keywords').includes('risk__c')) boundRiskApi = el.getAttribute('data-api-name');
+                });
+                const explicitRisk = boundRiskApi ? (poc[boundRiskApi]?.toLowerCase() || '') : '';
+                if(explicitRisk === 'red') riskPct = Math.min(riskPct + 20, 100);
+                else if(explicitRisk === 'amber' || explicitRisk === 'yellow') riskPct = Math.min(riskPct + 10, 100);
+
+                let mpScore = 0;
+                if(dynamicSchema.meddpicc) mpScore = dynamicSchema.meddpicc.filter(f => opp[f.name]).length;
+                const mpPct = mpTotal > 0 ? (mpScore / mpTotal) * 100 : 0;
+                
+                const pStage = boundPocStageApi ? (poc[boundPocStageApi]?.toLowerCase() || '') : '';
+                const stgW = stageWeights[pStage] || 0;
+                const compPct = (stgW * 0.5) + (mpPct * 0.5);
+                tComp += compPct;
+
+                if(amt > 0) {
+                    scatterData.push({
+                        x: compPct, y: dStag, r: Math.max(Math.min(amt / 20000, 25), 4),
+                        accountName: opp.Account?.Name || 'Unknown', amtStr: `$${amt.toLocaleString()}`,
+                        color: dStag > 30 ? 'rgba(239, 68, 68, 0.7)' : (dStag > 14 ? 'rgba(234, 179, 8, 0.7)' : 'rgba(34, 197, 94, 0.7)')
+                    });
+                }
+
+                const bIdx = barData.labels.findIndex(l => l.toLowerCase() === pStage);
+                if(bIdx !== -1) {
+                    if(dStag > 30) barData.critical[bIdx] += amt;
+                    else if(dStag > 14) barData.warning[bIdx] += amt;
+                    else barData.healthy[bIdx] += amt;
+                }
+
+                list.innerHTML += `
+                    <tr class="border-b border-borderColor hover:bg-hoverBg transition-colors">
+                        <td class="p-3 text-textBright font-bold truncate max-w-[200px]">${escapeHTML(opp.Account?.Name) || '--'}</td>
+                        <td class="p-3 text-textMuted">${boundPocStageApi ? escapeHTML(poc[boundPocStageApi] || '--') : '--'}</td>
+                        <td class="p-3 text-textMuted text-center">${mpScore}/${mpTotal}</td>
+                        <td class="p-3 text-purple-400 font-bold text-center">${compPct.toFixed(0)}%</td>
+                        <td class="p-3 text-center ${dStag > 30 ? 'text-red-400 font-bold' : 'text-textMuted'}">${dStag}</td>
+                        <td class="p-3 text-red-400 font-bold text-center">${riskPct.toFixed(0)}%</td>
+                        <td class="p-3 text-textMuted text-right">$${amt.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('fc-active-amt').innerText = `$${tAmt.toLocaleString(undefined, {maximumFractionDigits:0})}`;
+            document.getElementById('fc-avg-comp').innerText = scOpps.length > 0 ? `${(tComp / scOpps.length).toFixed(1)}%` : '0%';
+            document.getElementById('fc-critical').innerText = `${critCount} Deals`;
+
+            drawCharts(scatterData, barData);
+        }
+
+        function drawCharts(scatterData, barData) {
+            if(scatterChartInstance) scatterChartInstance.destroy();
+            if(barChartInstance) barChartInstance.destroy();
+
+            Chart.defaults.color = '#ABB2BF';
+            Chart.defaults.borderColor = '#3E4451';
+
+            const ctxScatter = document.getElementById('scatterChart').getContext('2d');
+            scatterChartInstance = new Chart(ctxScatter, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Active Deals',
+                        data: scatterData,
+                        backgroundColor: scatterData.map(d => d.color),
+                        borderColor: '#181A1F',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw.accountName} (${ctx.raw.amtStr}) | Comp: ${ctx.raw.x.toFixed(0)}% | Stag: ${ctx.raw.y}d` } }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Deal Completion %' }, min: 0, max: 100 },
+                        y: { title: { display: true, text: 'Stagnant Days' }, min: 0 }
+                    }
+                }
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: barData.labels,
+                    datasets: [
+                        { label: 'Healthy (<15d)', data: barData.healthy, backgroundColor: 'rgba(34, 197, 94, 0.8)' },
+                        { label: 'Warning (15-30d)', data: barData.warning, backgroundColor: 'rgba(234, 179, 8, 0.8)' },
+                        { label: 'Critical (>30d)', data: barData.critical, backgroundColor: 'rgba(239, 68, 68, 0.8)' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, ticks: { callback: (val) => '$' + (val/1000) + 'k' } }
+                    }
+                }
+            });
+        }
+
+        function closeForecast() { document.getElementById('forecast-dashboard').classList.add('hidden'); }
+
+        // --- COLUMNS EDITOR ---
+        function restoreCols() {
+            const saved = localStorage.getItem('columns_v3');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.length === columns.length) columns = parsed;
+            }
+            renderColMenu(); renderTableHeaders();
+        }
+        function toggleColMenu() { document.getElementById('col-menu').classList.toggle('hidden'); }
+        function renderColMenu() {
+            const menu = document.getElementById('col-menu-items'); menu.innerHTML = '';
+            columns.forEach((col, index) => {
+                menu.innerHTML += `
+                    <div class="flex justify-between items-center px-4 py-1 hover:bg-hoverBg border-b border-borderColor border-opacity-30">
+                        <label class="flex items-center cursor-pointer flex-1 text-textBright text-xs"><input type="checkbox" ${col.visible ? 'checked' : ''} onchange="toggleColVis(${index}, this.checked)" class="mr-2">${col.label}</label>
+                        <div class="flex space-x-2"><button onclick="moveCol(${index}, -1)" class="text-textMuted hover:text-white" ${index===0 ? 'disabled style="opacity:0.2"':''}>▲</button><button onclick="moveCol(${index}, 1)" class="text-textMuted hover:text-white" ${index===columns.length-1 ? 'disabled style="opacity:0.2"':''}>▼</button></div>
+                    </div>`;
+            });
+        }
+        function toggleColVis(index, isVisible) { columns[index].visible = isVisible; }
+        function moveCol(index, dir) {
+            if(index + dir < 0 || index + dir >= columns.length) return;
+            const temp = columns[index]; columns[index] = columns[index + dir]; columns[index + dir] = temp; renderColMenu();
+        }
+        function saveAndCloseCols() {
+            localStorage.setItem('columns_v3', JSON.stringify(columns)); document.getElementById('col-menu').classList.add('hidden');
+            renderTableHeaders(); renderTable();
+        }
+        function renderTableHeaders() {
+            const thead = document.getElementById('table-head');
+            let html = `<tr><th class="p-2 font-bold text-center w-8">#</th><th class="p-2 font-bold text-center w-8">☑</th>`;
+            columns.filter(c => c.visible).forEach(c => { html += `<th class="p-2 font-bold cursor-pointer hover:text-accentBlue text-center ${c.width}" onclick="sortTable('${c.prop}')">${c.label} ↕</th>`; });
+            html += `</tr>`; thead.innerHTML = html;
+        }
+
+        function initResizers() {
+            const resX = document.getElementById('resizer-x'); const leftP = document.getElementById('left-panel');
+            let resXActive = false;
+            resX.addEventListener('mousedown', () => { resXActive = true; resX.classList.add('active'); document.body.style.cursor = 'col-resize'; });
+            const resY = document.getElementById('resizer-y'); const botS = document.getElementById('bottom-section');
+            let resYActive = false;
+            resY.addEventListener('mousedown', () => { resYActive = true; resY.classList.add('active'); document.body.style.cursor = 'row-resize'; });
+            document.addEventListener('mousemove', (e) => {
+                if (resXActive) { const r = document.getElementById('top-section').getBoundingClientRect(); leftP.style.width = `${Math.max(300, Math.min(e.clientX - r.left, r.width - 300))}px`; leftP.style.flex = 'none'; }
+                if (resYActive) { const r = document.getElementById('app-container').getBoundingClientRect(); botS.style.height = `${Math.max(150, Math.min(r.bottom - e.clientY, r.height - 200))}px`; }
+            });
+            document.addEventListener('mouseup', () => {
+                if(resXActive) localStorage.setItem('layout_left', leftP.style.width);
+                if(resYActive) localStorage.setItem('layout_bot', botS.style.height);
+                resXActive = false; resYActive = false; resX.classList.remove('active'); resY.classList.remove('active'); document.body.style.cursor = '';
+            });
+        }
+        function restoreLayout() {
+            if(localStorage.getItem('layout_left')) { document.getElementById('left-panel').style.width = localStorage.getItem('layout_left'); document.getElementById('left-panel').style.flex = 'none'; }
+            if(localStorage.getItem('layout_bot')) document.getElementById('bottom-section').style.height = localStorage.getItem('layout_bot');
+        }
+
+        function toggleSettings() { document.getElementById('settings-menu').classList.toggle('hidden'); }
+        function setTheme(theme) { document.body.className = `bg-bgDark text-textMuted font-sans h-screen flex flex-col p-4 overflow-hidden relative ${theme !== 'dark' ? 'theme-'+theme : ''}`; toggleSettings(); }
+        function toggleSafeMode() { isSafeMode = document.getElementById('safe-mode-toggle').checked; toggleSettings(); applyFilters(); }
+        async function logOut() {
+            if(confirm("Are you sure you want to log out of Salesforce and shut down the workspace?")) {
+                document.body.innerHTML = "<h1 class='text-white text-center mt-20 text-2xl font-bold'>Logging out and shutting down...<br><br>Goodbye! 👋</h1>";
+                try { await fetch('/api/auth/logout'); setTimeout(() => { window.close(); }, 1500); } catch(e) { window.close(); }
+            }
+        }
+
+        function clearEditor() {
+            selectedRecordId = null; selectedPocId = null;
+            document.querySelectorAll('input:not([type="checkbox"]), textarea, select').forEach(el => {
+                if(el.id && el.id !== 'search-bar' && !el.id.startsWith('filter') && el.id !== 'safe-mode-toggle') { 
+                    el.value = ''; 
+                    // Do not disable readonly inputs so they can still trigger onclick events
+                    if (!el.hasAttribute('readonly')) {
+                        el.disabled = true; 
+                    }
+                }
+            });
+            document.getElementById('lbl-selected-account').innerText = "Select an account row to edit metrics";
+            document.getElementById('btn-save-notes').disabled = true; document.getElementById('btn-copy-notes').disabled = true;
+            document.getElementById('btn-save-matrix').disabled = true;
+            updateCharCount();
+            evaluateFitReason();
+        }
+
+        // --- UNIVERSAL DATA BINDER ENGINE ---
+        function bindDynamicSchema(schemaData) {
+            document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                // We strip all underscores and spaces for highly aggressive matching
+                const kws = el.getAttribute('data-keywords').split(',').map(k => k.trim().toLowerCase().replace(/_/g, ''));
+                let matchedField = null;
+
+                // 1. Try exact matches first
+                for (let kw of kws) {
+                    matchedField = schemaData.poc_fields.find(f => {
+                        const cleanF = f.toLowerCase().replace(/_/g, '');
+                        return cleanF === kw || cleanF === kw + 'c';
+                    });
+                    if (matchedField) break;
+                }
+
+                // 2. Try fuzzy matches, prioritizing picklist fields if this is a dropdown
+                if (!matchedField) {
+                    for (let kw of kws) {
+                        if (el.tagName === 'SELECT') {
+                            matchedField = schemaData.poc_fields.find(f => f.toLowerCase().replace(/_/g, '').includes(kw) && schemaData.poc_picklists[f]);
+                        }
+                        if (!matchedField) {
+                            matchedField = schemaData.poc_fields.find(f => f.toLowerCase().replace(/_/g, '').includes(kw));
+                        }
+                        if (matchedField) break;
+                    }
+                }
+                
+                if (matchedField) {
+                    el.setAttribute('data-api-name', matchedField);
+                    
+                    if (el.tagName === 'SELECT' && schemaData.poc_picklists[matchedField]) {
+                        const currentVal = el.value;
+                        el.innerHTML = '<option value="">--None--</option>';
+                        schemaData.poc_picklists[matchedField].forEach(v => {
+                            el.innerHTML += `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`;
+                        });
+                        if(currentVal) el.value = currentVal;
+                    }
+                }
+            });
+        }
+
+        function getDynamicPayload() {
+            const payload = {};
+            document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                const apiName = el.getAttribute('data-api-name');
+                if (apiName) {
+                    payload[apiName] = el.value || null;
+                }
+            });
+            return payload;
+        }
+
+        async function forceRefresh() {
+            if(pollInterval) clearInterval(pollInterval);
+            const list = document.getElementById('opp-list');
+            list.innerHTML = `<tr><td colspan="20" class="text-center p-8 text-accentBlue font-bold animate-pulse">
+                <svg viewBox="0 0 100 100" width="48" height="48" class="mx-auto mb-4 rounded">
+                    <rect width="100" height="100" fill="#00A745"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M 30 20 H 55 C 75 20 85 30 85 45 C 85 60 75 70 55 70 H 30 V 20 Z M 45 35 V 55 H 55 C 65 55 68 50 68 45 C 68 40 65 35 55 35 H 45 Z" fill="#FFFFFF"/>
+                    <rect x="30" y="76" width="15" height="15" fill="#FFFFFF"/>
+                </svg>
+                ⏳ Fetching latest schema and pulling pipeline data...</td></tr>`;
+            
+            try {
+                const res = await fetch('/api/schema?refresh=true'); 
+                const result = await res.json();
+                if(result.status === 'success') {
+                    dynamicSchema = result.data;
+                    bindDynamicSchema(dynamicSchema);
+                }
+            } catch(e) {}
+            
+            fetchData(true);
+        }
+
+        async function fetchSchema() {
+            try {
+                const res = await fetch('/api/schema'); const result = await res.json();
+                if(result.status === 'success') {
+                    dynamicSchema = result.data;
+                    bindDynamicSchema(dynamicSchema);
+                }
+                fetchData();
+            } catch(e) { fetchData(); }
+        }
+
+        async function fetchData(isRefresh = false) {
+            if(pollInterval) clearInterval(pollInterval);
+            const list = document.getElementById('opp-list');
+            if (!isRefresh) {
+                list.innerHTML = `<tr><td colspan="20" class="text-center p-8 text-accentBlue font-bold animate-pulse">
+                    <svg viewBox="0 0 100 100" width="48" height="48" class="mx-auto mb-4 rounded">
+                        <rect width="100" height="100" fill="#00A745"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M 30 20 H 55 C 75 20 85 30 85 45 C 85 60 75 70 55 70 H 30 V 20 Z M 45 35 V 55 H 55 C 65 55 68 50 68 45 C 68 40 65 35 55 35 H 45 Z" fill="#FFFFFF"/>
+                        <rect x="30" y="76" width="15" height="15" fill="#FFFFFF"/>
+                    </svg>
+                    ⏳ Authenticating and pulling pipeline data...</td></tr>`;
+            }
+            try {
+                const url = `/api/opportunities${isRefresh ? '?refresh=true' : ''}`;
+                const response = await fetch(url); 
+                const result = await response.json();
+                
+                if (result.status === 'auth_required') return list.innerHTML = `<tr><td colspan="20" class="text-center p-8"><p class="text-red-400 mb-4 font-bold text-lg">Salesforce Session Expired</p><button onclick="triggerLogin()" class="bg-accentBlue text-white px-6 py-3 rounded shadow hover:bg-blue-500 font-bold">🔑 Log in to Salesforce</button></td></tr>`;
+                if (result.status === 'success') { rawRecords = result.data; populateDynamicFilters(); applyFilters(); } 
+                else { showModal("Data Fetch Failed", escapeHTML(result.message)); list.innerHTML = `<tr><td colspan="20" class="text-center p-4 text-red-500">❌ Error Loading Pipeline</td></tr>`; }
+            } catch (error) { showModal("Connection Error", "Could not connect to the backend engine."); list.innerHTML = `<tr><td colspan="20" class="text-center p-4 text-red-500">❌ Connection Error</td></tr>`; }
+        }
+
+        async function triggerLogin() {
+            document.getElementById('opp-list').innerHTML = `<tr><td colspan="20" class="text-center p-8 text-accentBlue font-bold animate-pulse">
+                <svg viewBox="0 0 100 100" width="48" height="48" class="mx-auto mb-4 rounded">
+                    <rect width="100" height="100" fill="#00A745"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M 30 20 H 55 C 75 20 85 30 85 45 C 85 60 75 70 55 70 H 30 V 20 Z M 45 35 V 55 H 55 C 65 55 68 50 68 45 C 68 40 65 35 55 35 H 45 Z" fill="#FFFFFF"/>
+                    <rect x="30" y="76" width="15" height="15" fill="#FFFFFF"/>
+                </svg>
+                ⏳ Opening Browser... Waiting for Salesforce login completion...</td></tr>`;
+            await fetch('/api/auth/login');
+            pollInterval = setInterval(async () => {
+                const res = await fetch('/api/auth/status'); const data = await res.json();
+                if(data.status === 'success') { clearInterval(pollInterval); fetchSchema(); }
+            }, 3000);
+        }
+
+        function getPdFyAndQ(dateStr) {
+            if(!dateStr) return {fy: "Unknown", q: "Unknown"};
+            const d = new Date(dateStr); const m = d.getMonth() + 1; const y = d.getFullYear(); let fy, q;
+            if (m === 1) { fy = y; q = "Q4"; } else { fy = y + 1; if(m>=2 && m<=4) q = "Q1"; else if(m>=5 && m<=7) q = "Q2"; else if(m>=8 && m<=10) q = "Q3"; else q = "Q4"; }
+            return { fy: `FY${fy.toString().slice(-2)}`, q };
+        }
+
+        function parseLatestDate(text1, text2) {
+            const pattern = /\b(\d{1,4})[-/](\d{1,2})[-/](\d{1,4})\b/g; let latest = null; let match; const today = new Date();
+            while ((match = pattern.exec(`${text1 || ''}\n${text2 || ''}`)) !== null) {
+                try {
+                    let y = parseInt(match[1].length === 4 ? match[1] : match[3]); let m = parseInt(match[1].length === 4 ? match[2] : match[1]); let d = parseInt(match[1].length === 4 ? match[3] : match[2]);
+                    if (y < 100) y += 2000; const dt = new Date(y, m - 1, d);
+                    if (dt <= today && (!latest || dt > latest)) latest = dt;
+                } catch (e) {}
+            }
+            return latest;
+        }
+
+        function populateDynamicFilters() {
+            const stageF = document.getElementById('filter-stage'); const stages = new Set(rawRecords.map(r => r.StageName).filter(Boolean));
+            stageF.innerHTML = '<option value="All">All Stages</option>'; Array.from(stages).sort().forEach(s => stageF.innerHTML += `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`);
+            const fyF = document.getElementById('filter-fy'); const fys = new Set(rawRecords.map(r => getPdFyAndQ(r.CloseDate).fy).filter(f => f !== 'Unknown'));
+            fyF.innerHTML = '<option value="All">FY: All</option>'; Array.from(fys).sort().reverse().forEach(fy => fyF.innerHTML += `<option value="${escapeHTML(fy)}">${escapeHTML(fy)}</option>`);
+        }
+
+        function applyFilters() {
+            const sF = document.getElementById('filter-status').value; const tF = document.getElementById('filter-timeline').value;
+            const stF = document.getElementById('filter-stage').value; const fyF = document.getElementById('filter-fy').value;
+            const qF = document.getElementById('filter-q').value; const search = document.getElementById('search-bar').value.toLowerCase();
+            const today = new Date(); let totalAmt = 0; const cQ = getPdFyAndQ(today.toISOString().split('T')[0]);
+
+            let boundPocStageApi = '';
+            document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                if (el.getAttribute('data-keywords').includes('poc_stage')) boundPocStageApi = el.getAttribute('data-api-name');
+            });
+
+            let syncYellow = 0;
+            let syncRed = 0;
+
+            filteredRecords = rawRecords.filter(opp => {
+                const poc = opp.POCs__r && opp.POCs__r.records ? opp.POCs__r.records[0] : {};
+                const oStg = opp.StageName || ''; const pStg = boundPocStageApi ? (poc[boundPocStageApi] || '') : ''; const close = opp.CloseDate || '';
+                
+                const oStgLower = oStg.toLowerCase();
+                const pStgLower = pStg.toLowerCase();
+
+                if (oStg.includes("Won") && close) {
+                    const oppQ = getPdFyAndQ(close); if (oppQ.fy === cQ.fy && oppQ.q === cQ.q) totalAmt += parseFloat(opp.Amount || 0);
+                }
+                
+                const oppIsClosed = oStgLower.includes('won') || oStgLower.includes('lost') || oStgLower.includes('closed');
+                const pocIsClosed = pStgLower.includes('closed') || pStgLower === '';
+                const isC = oppIsClosed || pocIsClosed;
+
+                // --- PIPELINE SYNC LOGIC ENGINE ---
+                let isActionReq = oppIsClosed && !pocIsClosed && poc.Id;
+                let isOutOfSync = false;
+
+                if (!oppIsClosed && poc.Id && pStgLower !== '') {
+                    let validScStages = [];
+                    if (oStgLower.includes('01') || oStgLower.includes('qualified')) validScStages = ['plan', 'demo', 'tech discovery'];
+                    else if (oStgLower.includes('02') || oStgLower.includes('discovery')) validScStages = ['validate', 'plan', 'tech discovery', 'demo'];
+                    else if (oStgLower.includes('03') || oStgLower.includes('validation')) validScStages = ['demo', 'partner', 'plan', 'tech discovery', 'validate'];
+                    else if (oStgLower.includes('04') || oStgLower.includes('negotiation')) validScStages = ['partner', 'validate'];
+                    else if (oStgLower.includes('05') || oStgLower.includes('06') || oStgLower.includes('validate')) validScStages = ['validate', 'partner'];
+                    
+                    if (validScStages.length > 0) {
+                        isOutOfSync = !validScStages.some(valid => pStgLower.includes(valid));
+                    }
+                }
+
+                // --- STANDARD FILTERING ---
+                let matchFilters = true;
+                if (sF === "Active" && isC) matchFilters = false; 
+                if (sF === "Closed" && !isC) matchFilters = false;
+                if (stF !== "All" && oStg !== stF) matchFilters = false;
+
+                if (close) {
+                    const cD = new Date(close);
+                    if (tF === "Past Due" && cD >= today) matchFilters = false;
+                    if (tF === "Closing This Month" && (cD.getMonth() !== today.getMonth() || cD.getFullYear() !== today.getFullYear())) matchFilters = false;
+                    if (tF === "Closing Next Month") {
+                        const nM = today.getMonth() === 11 ? 0 : today.getMonth() + 1; const nY = today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear();
+                        if (cD.getMonth() !== nM || cD.getFullYear() !== nY) matchFilters = false;
+                    }
+                    const pQ = getPdFyAndQ(close);
+                    if (fyF !== "All" && pQ.fy !== fyF) matchFilters = false; if (qF !== "All" && pQ.q !== qF) matchFilters = false;
+                } else if (fyF !== "All" || qF !== "All") matchFilters = false;
+
+                if (search) {
+                    const accName = opp.Account && opp.Account.Name ? opp.Account.Name.toLowerCase() : '';
+                    if (!accName.includes(search) && !opp.Id.toLowerCase().includes(search) && !(poc.Id || '').toLowerCase().includes(search)) matchFilters = false;
+                }
+
+                // Calculate Totals only for rows that match the standard filters
+                if (matchFilters) {
+                    if (isActionReq) syncRed++;
+                    if (isOutOfSync) syncYellow++;
+                }
+
+                // Apply the Sync Filter Toggle
+                if (filterSyncIssuesOnly && !isActionReq && !isOutOfSync) return false;
+
+                return matchFilters;
+            });
+
+            document.getElementById('lbl-q-summary').innerText = `🏆 AMOUNT WON (CURRENT ${cQ.fy} ${cQ.q}): $${totalAmt.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('count-sync-yellow').innerText = syncYellow;
+            document.getElementById('count-sync-red').innerText = syncRed;
+
+            if(sortCol) executeSort(sortCol, sortAsc); else renderTable();
+            clearEditor();
+        }
+
+        function sortTable(column) { if (sortCol === column) sortAsc = !sortAsc; else { sortCol = column; sortAsc = true; } executeSort(sortCol, sortAsc); }
+
+        function executeSort(col, asc) {
+            filteredRecords.sort((a, b) => { let vA = getSortValue(a, col); let vB = getSortValue(b, col);
+                if (vA < vB) return asc ? -1 : 1; if (vA > vB) return asc ? 1 : -1; return 0;
+            });
+            renderTable();
+        }
+
+        function getSortValue(opp, col) {
+            const poc = opp.POCs__r && opp.POCs__r.records ? opp.POCs__r.records[0] : {};
+            switch(col) {
+                case 'Health': return opp.CloseDate ? new Date(opp.CloseDate).getTime() : 0; 
+                case 'Meddpicc': return dynamicSchema.meddpicc ? dynamicSchema.meddpicc.filter(f => opp[f.name]).length : 0;
+                case 'Owner': return opp.Owner?.Name?.toLowerCase() || '';
+                case 'Account': return opp.Account?.Name?.toLowerCase() || '';
+                case 'Amount': return parseFloat(opp.Amount || 0);
+                case 'StageName': return opp.StageName?.toLowerCase() || '';
+                case 'Type': return opp.Type?.toLowerCase() || '';
+                case 'Motion': return opp.Sales_Motion__c?.toLowerCase() || '';
+                case 'Status': return opp.Current_Status__c?.toLowerCase() || '';
+                case 'CreatedDate': return opp.CreatedDate ? new Date(opp.CreatedDate).getTime() : 0;
+                case 'CloseDate': return opp.CloseDate ? new Date(opp.CloseDate).getTime() : 0;
+                case 'OppName': return opp.Name?.toLowerCase() || '';
+                case 'DaysOpen': return (opp.CreatedDate && opp.CloseDate) ? Math.ceil((new Date(opp.CloseDate) - new Date(opp.CreatedDate.split('T')[0])) / (1000*60*60*24)) : -1;
+                case 'SCLastMod': 
+                    const d1 = parseLatestDate(opp.SC_Notes__c, poc.Notes__c);
+                    return d1 ? d1.getTime() : (poc.LastModifiedDate ? new Date(poc.LastModifiedDate.split('T')[0]).getTime() : 0);
+                case 'Stagnant': 
+                    const d2 = parseLatestDate(opp.SC_Notes__c, poc.Notes__c);
+                    if(d2) return Math.floor((new Date() - d2) / (1000 * 60 * 60 * 24));
+                    if(poc.LastModifiedDate) return Math.floor((new Date() - new Date(poc.LastModifiedDate.split('T')[0])) / (1000 * 60 * 60 * 24));
+                    return 999;
+                default: return '';
+            }
+        }
+
+        function renderTable() {
+            const list = document.getElementById('opp-list');
+            list.innerHTML = '';
+            const mpTotal = dynamicSchema.meddpicc ? dynamicSchema.meddpicc.length : 0;
+
+            let boundPocStageApi = '';
+            document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                if (el.getAttribute('data-keywords').includes('poc_stage')) boundPocStageApi = el.getAttribute('data-api-name');
+            });
+
+            filteredRecords.forEach((opp, index) => {
+                const poc = opp.POCs__r && opp.POCs__r.records ? opp.POCs__r.records[0] : {};
+                
+                let cStg = opp.StageName || ''; 
+                const oStgLower = cStg.toLowerCase();
+                const pStgLower = boundPocStageApi ? (poc[boundPocStageApi] || '').toLowerCase() : '';
+                
+                if (cStg.includes("Won")) cStg = "Closed Won"; else if (cStg.includes("Lost")) cStg = "Closed Lost"; else if (cStg.includes("-")) cStg = cStg.split("-").pop().trim();
+
+                const cDt = opp.CreatedDate ? opp.CreatedDate.split('T')[0] : ''; const clsDt = opp.CloseDate || '';
+                let dOpn = '--'; if(cDt && clsDt) dOpn = Math.ceil((new Date(clsDt) - new Date(cDt)) / (1000 * 60 * 60 * 24));
+
+                let scL = '--'; let dStag = '--'; const lnD = parseLatestDate(opp.SC_Notes__c, poc.Notes__c); const today = new Date();
+                if (lnD) { scL = lnD.toISOString().split('T')[0]; dStag = Math.floor((today - lnD) / (1000 * 60 * 60 * 24)); } 
+                else if (poc.LastModifiedDate || opp.LastModifiedDate) { scL = (poc.LastModifiedDate || opp.LastModifiedDate || '').split('T')[0]; if (scL) dStag = Math.floor((today - new Date(scL)) / (1000 * 60 * 60 * 24)); }
+
+                let hlth = '🟢'; if (clsDt) { const dtC = (new Date(clsDt) - today) / (1000 * 60 * 60 * 24); if (dtC < 0) hlth = '🔴'; else if (dtC <= 14 || (dOpn !== '--' && dOpn > 120)) hlth = '🟡'; }
+
+                const oppIsClosed = oStgLower.includes('won') || oStgLower.includes('lost') || oStgLower.includes('closed');
+                const pocIsClosed = pStgLower.includes('closed') || pStgLower === '';
+                const actionReq = oppIsClosed && !pocIsClosed && poc.Id;
+
+                let outOfSync = false;
+                if (!oppIsClosed && poc.Id && pStgLower !== '') {
+                    let validScStages = [];
+                    if (oStgLower.includes('01') || oStgLower.includes('qualified')) validScStages = ['plan', 'demo', 'tech discovery'];
+                    else if (oStgLower.includes('02') || oStgLower.includes('discovery')) validScStages = ['validate', 'plan', 'tech discovery', 'demo'];
+                    else if (oStgLower.includes('03') || oStgLower.includes('validation')) validScStages = ['demo', 'partner', 'plan', 'tech discovery', 'validate'];
+                    else if (oStgLower.includes('04') || oStgLower.includes('negotiation')) validScStages = ['partner', 'validate'];
+                    else if (oStgLower.includes('05') || oStgLower.includes('06') || oStgLower.includes('validate')) validScStages = ['validate', 'partner'];
+                    
+                    if (validScStages.length > 0) {
+                        outOfSync = !validScStages.some(valid => pStgLower.includes(valid));
+                    }
+                }
+
+                const hasD = localStorage.getItem(`draft_${opp.Id}`) !== null;
+                
+                let hilight = ''; let accBadge = '';
+                if (actionReq) {
+                    hilight = 'bg-red-900 bg-opacity-30 border-l-4 border-red-500';
+                    accBadge = `<span class="text-red-400 text-sm ml-2 cursor-help" title="ACTION REQUIRED: Main Opp is ${escapeHTML(cStg)}, but SC Stage is ${escapeHTML(poc[boundPocStageApi])}. Please Close the SC Record!">🔴</span>`;
+                } else if (outOfSync) {
+                    hilight = 'bg-yellow-900 bg-opacity-30 border-l-4 border-yellow-500';
+                    accBadge = `<span class="text-yellow-400 text-sm ml-2 cursor-help" title="STAGE MISMATCH: Main Opp is in '${escapeHTML(cStg)}', but SC Stage is '${escapeHTML(poc[boundPocStageApi])}'. Please sync stages.">⚠️</span>`;
+                } else if (hasD) {
+                    hilight = 'bg-yellow-900 bg-opacity-20 border-l-4 border-yellow-500';
+                    accBadge = '<span class="text-yellow-500 text-xxs ml-1 font-bold">[DRAFT]</span>';
+                }
+
+                let mpScore = 0; if(mpTotal > 0) mpScore = dynamicSchema.meddpicc.filter(f => opp[f.name]).length;
+                let mpColor = mpScore >= 6 ? 'text-green-400' : (mpScore >= 3 ? 'text-yellow-400' : 'text-red-400');
+                if(mpTotal === 0) mpColor = "text-textMuted";
+
+                let trHtml = `<tr onclick="selectRow(${index})" id="row-${index}" class="hover:bg-hoverBg cursor-pointer transition border-b border-borderColor ${hilight}">
+                    <td class="p-2 text-center text-textMuted">${index + 1}</td>
+                    <td class="p-2 text-center text-lg" onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox cursor-pointer" data-id="${opp.Id}" data-poc="${poc.Id || ''}" ${hasD ? 'checked' : ''}></td>`;
+
+                columns.filter(c => c.visible).forEach(c => {
+                    if (c.id === 'health') trHtml += `<td class="p-2 text-center text-lg drop-shadow">${hlth}</td>`;
+                    else if (c.id === 'meddpicc') trHtml += `<td class="p-2 text-center font-bold ${mpColor}">${mpScore}/${mpTotal}</td>`;
+                    else if (c.id === 'owner') trHtml += `<td class="p-2 text-textMuted truncate max-w-[120px]">${escapeHTML(opp.Owner?.Name) || '--'}</td>`;
+                    else if (c.id === 'account') trHtml += `<td class="p-2 text-textBright font-bold truncate max-w-[150px]">${escapeHTML(opp.Account ? opp.Account.Name : '--')} ${accBadge}</td>`;
+                    else if (c.id === 'amount') trHtml += `<td class="p-2 text-green-400 font-bold">$${(opp.Amount || 0).toLocaleString()}</td>`;
+                    else if (c.id === 'stage') trHtml += `<td class="p-2">${escapeHTML(cStg)}</td>`;
+                    else if (c.id === 'type') trHtml += `<td class="p-2 text-textMuted">${escapeHTML(opp.Type) || '--'}</td>`;
+                    else if (c.id === 'motion') trHtml += `<td class="p-2 text-textMuted">${escapeHTML(opp.Sales_Motion__c) || '--'}</td>`;
+                    else if (c.id === 'created') trHtml += `<td class="p-2 text-center text-textMuted">${cDt}</td>`;
+                    else if (c.id === 'close') trHtml += `<td class="p-2 text-center text-textMuted">${clsDt}</td>`;
+                    else if (c.id === 'days') trHtml += `<td class="p-2 text-center text-textMuted">${dOpn}</td>`;
+                    else if (c.id === 'sclast') trHtml += `<td class="p-2 text-center text-textMuted">${scL}</td>`;
+                    else if (c.id === 'stagnant') trHtml += `<td class="p-2 text-center ${dStag > 30 ? 'text-red-400 font-bold' : 'text-textMuted'}">${dStag}</td>`;
+                    else if (c.id === 'oppname') trHtml += `<td class="p-2 text-textMuted truncate max-w-[200px]" title="${escapeHTML(opp.Name)}">${escapeHTML(opp.Name)}</td>`;
+                    else if (c.id === 'status') trHtml += `<td class="p-2 text-textMuted truncate max-w-[200px]">${escapeHTML(stripHtml(opp.Current_Status__c)) || '--'}</td>`;
+                });
+                
+                trHtml += `</tr>`; list.innerHTML += trHtml;
+            });
+            document.getElementById('lbl-row-count').innerText = `Total Records: ${filteredRecords.length}`;
+        }
+
+        function selectRow(index) {
+            const opp = filteredRecords[index]; selectedRecordId = opp.Id; 
+            const poc = opp.POCs__r && opp.POCs__r.records ? opp.POCs__r.records[0] : {}; selectedPocId = poc.Id || null;
+
+            document.querySelectorAll('#opp-list tr').forEach(row => row.classList.remove('bg-hoverBg', 'bg-accentBlue', 'bg-opacity-30'));
+            document.getElementById(`row-${index}`).classList.add('bg-hoverBg', 'bg-accentBlue', 'bg-opacity-30');
+            document.getElementById('lbl-selected-account').innerText = `Editing Mappings For: ${escapeHTML(opp.Account ? opp.Account.Name : 'Unknown')}`;
+
+            document.querySelectorAll('.grid input:not([readonly]), .grid textarea, .grid select, .flex-col textarea').forEach(el => el.disabled = isSafeMode);
+            document.getElementById('btn-save-notes').disabled = isSafeMode; document.getElementById('btn-copy-notes').disabled = isSafeMode || !poc.Id;
+            document.getElementById('btn-save-matrix').disabled = isSafeMode;
+
+            const txtSc = document.getElementById('txt-sc-notes'); const txtPoc = document.getElementById('txt-poc-notes');
+            txtSc.value = stripHtml(opp.SC_Notes__c || ''); 
+            if (poc.Id) { txtPoc.value = stripHtml(poc.Notes__c || ''); txtPoc.classList.remove('text-textMuted'); } 
+            else { txtPoc.value = "[No Linked POC__c record]"; txtPoc.disabled = true; txtPoc.classList.add('text-textMuted'); }
+
+            document.getElementById('prop-owner').value = opp.Owner?.Name || '';
+            document.getElementById('prop-owner-id').value = opp.OwnerId || '';
+            document.getElementById('prop-opp-id').value = opp.Id || '';
+            document.getElementById('prop-type').value = opp.Type || '';
+            document.getElementById('prop-stage').value = opp.StageName || '';
+            document.getElementById('prop-motion').value = opp.Sales_Motion__c || '';
+            document.getElementById('prop-current-status').value = stripHtml(opp.Current_Status__c || '');
+            document.getElementById('prop-next-steps').value = stripHtml(opp.NextStep || '');
+            
+            const team = opp.OpportunityTeamMembers?.records || [];
+            document.getElementById('prop-team').value = team.map(m => `${m.User?.Name} (${m.TeamMemberRole})`).join(' | ');
+
+            const latestNoteDt = parseLatestDate(opp.SC_Notes__c, poc.Notes__c);
+            document.getElementById('prop-sc-last-mod').value = latestNoteDt ? latestNoteDt.toISOString().split('T')[0] : ((poc.LastModifiedDate || opp.LastModifiedDate || '').split('T')[0]);
+
+            document.getElementById('prop-poc-id').value = poc.Id || '--';
+            document.getElementById('prop-sc-name').value = poc.Solution_Consultant__r?.Name || '';
+            document.getElementById('prop-sales-lead').value = poc.Sales_Lead__r?.Name || '';
+            
+            document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                const apiName = el.getAttribute('data-api-name');
+                if (apiName && poc[apiName] !== undefined && poc[apiName] !== null) {
+                    if (el.type === 'date') {
+                        el.value = poc[apiName].split('T')[0]; 
+                    } else {
+                        el.value = stripHtml(poc[apiName]);
+                    }
+                } else {
+                    el.value = '';
+                }
+            });
+
+            if(!poc.Id) {
+                document.querySelectorAll('.dynamic-poc-field').forEach(el => { 
+                    if (!el.hasAttribute('readonly')) {
+                        el.disabled = true; 
+                    }
+                });
+            }
+            
+            loadLocalDraft(selectedRecordId, true); updateCharCount(); evaluateFitReason();
+        }
+
+        function updateCharCount() {
+            const sc = document.getElementById('txt-sc-notes').value.length; const pocBox = document.getElementById('txt-poc-notes');
+            document.getElementById('count-sc').innerText = `${sc} / 4000`; document.getElementById('count-poc').innerText = `${pocBox.disabled ? 0 : pocBox.value.length} / 4000`;
+        }
+
+        function copyToScNotes() {
+            if(!selectedRecordId || document.getElementById('txt-poc-notes').disabled) return;
+            document.getElementById('txt-poc-notes').value = document.getElementById('txt-sc-notes').value;
+            updateCharCount(); cacheLocalDraft(selectedRecordId);
+        }
+
+        function cacheLocalDraft(id) {
+            const draft = {
+                timestamp: new Date().toISOString(),
+                sc_notes: document.getElementById('txt-sc-notes').value, 
+                poc_notes: document.getElementById('txt-poc-notes').value,
+                status: document.getElementById('prop-current-status').value, 
+                next: document.getElementById('prop-next-steps').value,
+                dynamic_poc: getDynamicPayload()
+            };
+            
+            localStorage.setItem(`draft_${id}`, JSON.stringify(draft));
+            const cb = document.querySelector(`.row-checkbox[data-id="${id}"]`);
+            if(cb && !cb.checked) { cb.checked = true; cb.closest('tr').classList.add('bg-yellow-900', 'bg-opacity-20', 'border-l-4', 'border-yellow-500'); }
+        }
+
+        function loadLocalDraft(id = selectedRecordId, silent = false) {
+            if(!id) return; const draftRaw = localStorage.getItem(`draft_${id}`);
+            if(!draftRaw) {
+                if(!silent && event) { showModal("Draft System", "No Draft Found for this record.", "info"); }
+                return;
+            }
+            const d = JSON.parse(draftRaw);
+            document.getElementById('txt-sc-notes').value = d.sc_notes || '';
+            if(!document.getElementById('txt-poc-notes').disabled) {
+                document.getElementById('txt-poc-notes').value = d.poc_notes || ''; 
+                
+                if (d.dynamic_poc) {
+                    document.querySelectorAll('.dynamic-poc-field').forEach(el => {
+                        const apiName = el.getAttribute('data-api-name');
+                        if (apiName && d.dynamic_poc[apiName] !== undefined) {
+                            el.value = d.dynamic_poc[apiName];
+                        }
+                    });
+                }
+            }
+            document.getElementById('prop-current-status').value = d.status || ''; document.getElementById('prop-next-steps').value = d.next || '';
+            updateCharCount(); evaluateFitReason();
+        }
+
+        function restoreChecked() {
+            const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+            if(checkboxes.length === 0) return showModal("Action Required", "Please check the boxes next to the rows you want to restore drafts for.", "info");
+            let count = 0; checkboxes.forEach(cb => { if(localStorage.getItem(`draft_${cb.getAttribute('data-id')}`)) count++; });
+            showModal("Drafts Restored", `Found cached drafts for ${count} of the selected records. Click the row to verify and save them.`, "info");
+        }
+
+        async function syncChecked() {
+            const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+            if(checkboxes.length === 0) return showModal("Action Required", "Please check the boxes next to the rows you want to sync.", "info");
+            const btn = event.target; const origText = btn.innerText; btn.innerText = "⏳ Syncing..."; btn.disabled = true;
+
+            let successCount = 0;
+            
+            for (let cb of checkboxes) {
+                const oppId = cb.getAttribute('data-id'); const pocId = cb.getAttribute('data-poc'); const draftRaw = localStorage.getItem(`draft_${oppId}`);
+                if (draftRaw) {
+                    const d = JSON.parse(draftRaw);
+                    const pocPayload = pocId ? { Notes__c: d.poc_notes, ...(d.dynamic_poc || {}) } : {};
+                    
+                    const payload = {
+                        opp_id: oppId, poc_id: pocId,
+                        opp_payload: { SC_Notes__c: d.sc_notes, Current_Status__c: d.status, NextStep: d.next },
+                        poc_payload: pocPayload
+                    };
+                    try {
+                        const res = await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const jsonRes = await res.json();
+                        if (jsonRes.status === 'success') { localStorage.removeItem(`draft_${oppId}`); successCount++; }
+                    } catch (e) {}
+                }
+            }
+            btn.innerText = `✅ Synced ${successCount}/${checkboxes.length}`; btn.classList.replace("bg-green-600", "bg-accentBlue");
+            setTimeout(() => { btn.innerText = origText; btn.classList.replace("bg-accentBlue", "bg-green-600"); btn.disabled = false; fetchData(true); }, 3000);
+        }
+
+        async function saveNotes() {
+            if(!selectedRecordId) return;
+            const btn = document.getElementById('btn-save-notes'); btn.innerText = "⏳ Saving..."; btn.disabled = true;
+            const payload = { opp_id: selectedRecordId, poc_id: selectedPocId, opp_payload: { SC_Notes__c: document.getElementById('txt-sc-notes').value }, poc_payload: selectedPocId ? { Notes__c: document.getElementById('txt-poc-notes').value } : {} };
+            await sendSaveRequest(payload, btn, "💾 Save Current Notes");
+        }
+
+        async function saveMatrix() {
+            if(!selectedRecordId) return;
+            const btn = document.getElementById('btn-save-matrix'); btn.innerText = "⏳ Saving Matrix..."; btn.disabled = true;
+            
+            const payload = {
+                opp_id: selectedRecordId, poc_id: selectedPocId,
+                opp_payload: { Current_Status__c: document.getElementById('prop-current-status').value, NextStep: document.getElementById('prop-next-steps').value },
+                poc_payload: selectedPocId ? getDynamicPayload() : {}
+            };
+            await sendSaveRequest(payload, btn, "💾 Save Property Matrix Updates");
+        }
+
+        async function sendSaveRequest(payload, btnElement, originalText) {
+            try {
+                const response = await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const jsonRes = await response.json();
+                if (jsonRes.status === 'success') {
+                    btnElement.innerText = "✅ Saved Successfully!"; btnElement.classList.replace("bg-accentBlue", "bg-green-600"); localStorage.removeItem(`draft_${payload.opp_id}`); 
+                    setTimeout(() => { btnElement.innerText = originalText; btnElement.classList.replace("bg-green-600", "bg-accentBlue"); btnElement.disabled = false; fetchData(true); }, 2000);
+                } else { 
+                    showModal("Salesforce Sync Failed", escapeHTML(jsonRes.message) || "Unknown API Error. Check logs for details."); 
+                    btnElement.innerText = originalText; btnElement.disabled = false; 
+                }
+            } catch (err) { 
+                showModal("Connection Error", "The Workspace server could not be reached."); 
+                btnElement.innerText = originalText; btnElement.disabled = false; 
+            }
+        }
+
+        function openMeddpicc() {
+            if(!selectedRecordId) return;
+            const modal = document.getElementById('meddpicc-modal'); modal.classList.remove('hidden');
+            const content = document.getElementById('meddpicc-content'); content.innerHTML = '';
+            
+            const opp = rawRecords.find(r => r.Id === selectedRecordId);
+            const mpFields = dynamicSchema.meddpicc || [];
+            
+            if(mpFields.length === 0 || !opp) { content.innerHTML = '<p class="text-textMuted text-center mt-10">No MEDDPICC fields found.</p>'; return; }
+            
+            mpFields.forEach(f => {
+                const val = opp[f.name] ? stripHtml(opp[f.name]) : "";
+                const opacityClass = val ? "opacity-100" : "opacity-50";
+                content.innerHTML += `<div class="mb-4 ${opacityClass}"><label class="block text-textBright font-bold text-xs mb-1 uppercase">${escapeHTML(f.label)}</label><textarea readonly class="w-full bg-inputBg border border-borderColor text-textBright text-sm p-3 rounded font-mono resize-none h-20" placeholder="No data provided...">${escapeHTML(val)}</textarea></div>`;
+            });
+        }
+        function closeMeddpicc() { document.getElementById('meddpicc-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>

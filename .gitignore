@@ -1,0 +1,9 @@
+# Environments
+venv/
+
+# Auto-generated files
+__pycache__/
+
+# Logs and backups
+logs/
+Back up/
