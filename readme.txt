@@ -80,3 +80,6 @@ Checking Logs: If the app behaves unexpectedly, click the Settings ⚙️ button
 App Won't Open: Ensure your terminal hasn't lost its Salesforce connection. Open your Mac Terminal and type sf org login web --alias pd-workorg to manually refresh your session.
 
 Built to make SC workflows fast, safe, and efficient.
+
+*** Author
+Robinson Carrasco (RC) - rcarrasco@pagerduty.com
